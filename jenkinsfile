@@ -6,7 +6,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/USERNAME/contact-app.git'
+                url: 'https://github.com/Premchand-96/contact-app.git'
             }
         }
 
