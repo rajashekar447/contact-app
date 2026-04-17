@@ -9,7 +9,7 @@ pipeline {
             }
         }
 
-        stage('Install Backend Dependencies') {
+        stage('Install Backend') {
             steps {
                 dir('backend') {
                     sh 'npm install'
