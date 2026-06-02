@@ -1,16 +1,14 @@
 pipeline {
-    agent {
-        label 'slave-1'
-    }
- 
+    agent any
+
     stages {
- 
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/rajashekar447/contact-app.git'
             }
         }
- 
+
         stage('Build Backend') {
             steps {
                 dir('backend') {
@@ -18,13 +16,13 @@ pipeline {
                 }
             }
         }
- 
+
         stage('Test') {
             steps {
                 sh 'echo Testing Passed'
             }
         }
- 
+
         stage('Deploy Backend') {
             steps {
                 sh '''
@@ -34,12 +32,12 @@ pipeline {
                 '''
             }
         }
- 
+
         stage('Deploy Frontend') {
             steps {
                 sh '''
-                    mkdir -p /var/www/html
-                    cp frontend/index.html /var/www/html/index.html || true
+                    sudo mkdir -p /var/www/html
+                    sudo cp frontend/index.html /var/www/html/index.html
                 '''
             }
         }
