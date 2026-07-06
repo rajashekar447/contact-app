@@ -1,67 +1,58 @@
 pipeline {
-agent any
 
-```
-environment {
-    APP_NAME = "contact-app"
-    APP_DIR  = "/opt/contact-app"
-}
+    agent any
 
-stages {
-
-    stage('Checkout') {
-        steps {
-            git branch: 'main',
-                url: 'https://github.com/rajashekar447/contact-app.git'
-        }
+    environment {
+        APP_SERVER = "13.127.236.156"
+        APP_USER = "ubuntu"
     }
 
-    stage('Install Dependencies') {
-        steps {
-            dir('backend') {
-                sh 'npm install'
+    stages {
+
+        stage('Checkout Source') {
+            steps {
+                echo "Checking out source code..."
+
+                git branch: 'main',
+                    url: 'https://github.com/rajashekar447/contact-app.git'
+            }
+        }
+
+        stage('Install Backend Dependencies') {
+            steps {
+                dir('backend') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Deploy to Application Server') {
+            steps {
+
+                echo "Deploying application..."
+
+                sh """
+                ssh -o StrictHostKeyChecking=no ${APP_USER}@${APP_SERVER} '
+                cd /home/ubuntu/contact-app &&
+                ./deploy.sh
+                '
+                """
             }
         }
     }
 
-    stage('Deploy') {
-        steps {
-            sh '''
-                mkdir -p ${APP_DIR}
+    post {
 
-                echo "Stopping old application..."
-                pkill -f "server.js" || true
+        success {
+            echo "Deployment completed successfully."
+        }
 
-                echo "Removing old deployment..."
-                rm -rf ${APP_DIR}/*
+        failure {
+            echo "Deployment failed."
+        }
 
-                echo "Copying files..."
-                cp -r backend ${APP_DIR}/
-                cp -r frontend ${APP_DIR}/
-
-                echo "Starting application..."
-                cd ${APP_DIR}/backend
-
-                nohup node server.js > app.log 2>&1 &
-
-                sleep 5
-
-                echo "Application Status:"
-                ps -ef | grep node | grep server.js || true
-            '''
+        always {
+            echo "Pipeline execution finished."
         }
     }
-}
-
-post {
-    success {
-        echo 'Deployment Successful'
-    }
-
-    failure {
-        echo 'Deployment Failed'
-    }
-}
-```
-
 }
