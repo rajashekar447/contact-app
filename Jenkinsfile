@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        DEPLOY_SERVER = "ubuntu@13.233.231.180"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -10,7 +14,7 @@ pipeline {
             }
         }
 
-        stage('Backend Dependencies') {
+        stage('Install Backend Dependencies') {
             steps {
                 dir('backend') {
                     sh 'npm install'
@@ -18,7 +22,7 @@ pipeline {
             }
         }
 
-        stage('Frontend Dependencies') {
+        stage('Install Frontend Dependencies') {
             steps {
                 dir('frontend') {
                     sh 'npm install'
@@ -34,26 +38,47 @@ pipeline {
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Copy Project') {
             steps {
                 sh '''
-                sudo rm -rf /var/www/html/*
-                sudo cp -r frontend/dist/* /var/www/html/
+                rsync -avz --delete ./ $DEPLOY_SERVER:/home/ubuntu/contact-app/
                 '''
             }
         }
 
         stage('Restart Backend') {
             steps {
-                sh 'sudo systemctl restart backend'
+                sh '''
+                ssh $DEPLOY_SERVER "
+                cd /home/ubuntu/contact-app/backend &&
+                npm install &&
+                sudo systemctl restart backend
+                "
+                '''
+            }
+        }
+
+        stage('Deploy Frontend') {
+            steps {
+                sh '''
+                ssh $DEPLOY_SERVER "
+                cd /home/ubuntu/contact-app/frontend &&
+                npm install &&
+                npm run build &&
+                sudo rm -rf /var/www/html/* &&
+                sudo cp -r dist/* /var/www/html/
+                "
+                '''
             }
         }
 
         stage('Restart Nginx') {
             steps {
                 sh '''
-                sudo nginx -t
+                ssh $DEPLOY_SERVER "
+                sudo nginx -t &&
                 sudo systemctl restart nginx
+                "
                 '''
             }
         }
