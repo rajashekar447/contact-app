@@ -8,8 +8,8 @@ app.use(cors());
 
 const db = mysql.createConnection({
   host:'localhost',
-  user:'contactuser',
-  password:'ContactApp@2025',
+  user:'raja',
+  password:'password123',
   database:'contactsdb'
 });
 

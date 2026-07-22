@@ -1,24 +1,16 @@
 pipeline {
-
     agent any
-
-    environment {
-        APP_SERVER = "13.127.236.156"
-        APP_USER = "ubuntu"
-    }
 
     stages {
 
-        stage('Checkout Source') {
+        stage('Checkout') {
             steps {
-                echo "Checking out source code..."
-
                 git branch: 'main',
-                    url: 'https://github.com/rajashekar447/contact-app.git'
+                url: 'https://github.com/rajashekar447/contact-app.git'
             }
         }
 
-        stage('Install Backend Dependencies') {
+        stage('Backend Dependencies') {
             steps {
                 dir('backend') {
                     sh 'npm install'
@@ -26,33 +18,44 @@ pipeline {
             }
         }
 
-        stage('Deploy to Application Server') {
+        stage('Frontend Dependencies') {
             steps {
-
-                echo "Deploying application..."
-
-                sh """
-                ssh -o StrictHostKeyChecking=no ${APP_USER}@${APP_SERVER} '
-                cd /home/ubuntu/contact-app &&
-                ./deploy.sh
-                '
-                """
+                dir('frontend') {
+                    sh 'npm install'
+                }
             }
         }
-    }
 
-    post {
-
-        success {
-            echo "Deployment completed successfully."
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run build'
+                }
+            }
         }
 
-        failure {
-            echo "Deployment failed."
+        stage('Deploy Frontend') {
+            steps {
+                sh '''
+                sudo rm -rf /var/www/html/*
+                sudo cp -r frontend/dist/* /var/www/html/
+                '''
+            }
         }
 
-        always {
-            echo "Pipeline execution finished."
+        stage('Restart Backend') {
+            steps {
+                sh 'sudo systemctl restart backend'
+            }
+        }
+
+        stage('Restart Nginx') {
+            steps {
+                sh '''
+                sudo nginx -t
+                sudo systemctl restart nginx
+                '''
+            }
         }
     }
 }
