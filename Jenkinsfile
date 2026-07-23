@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_SERVER = "ubuntu@13.233.231.180"
+        DEPLOY_SERVER = "ubuntu@13.126.28.235"
     }
 
     stages {
